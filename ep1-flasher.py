@@ -157,8 +157,26 @@ def select_platform():
     return "Home Assistant" if choice == 1 else "SmartThings"
 
 
-def select_board_revision():
-    """Step 2: Select Board Revision"""
+def select_board_revision(platform=None, sensor=None):
+    """Step 2: Select Board Revision - depends on platform and sensor for SmartThings"""
+
+    # For SmartThings SEN0395, only Rev 1.5 is available
+    if platform == "SmartThings" and sensor == "SEN0395":
+        print_header("Step 2: Select Main Board Version")
+        print(
+            f"  {Colors.BOLD}Revision 1.5{Colors.END} (only option for SmartThings SEN0395)"
+        )
+        return "1.5"
+
+    # For SmartThings SEN0609, Rev 1.5 and 1.6 are available
+    if platform == "SmartThings" and sensor == "SEN0609":
+        print_header("Step 2: Select Main Board Version")
+        print_option(1, "Revision 1.6", "April 2025+")
+        print_option(2, "Revision 1.5", "March 2024 - April 2025")
+        choice = get_selection(2)
+        return "1.5" if choice == 2 else "1.6"
+
+    # Standard options for Home Assistant
     print_header("Step 2: Select Main Board Version")
     print_option(1, "Revision 1.6", "April 2025+")
     print_option(2, "Revision 1.5", "March 2024 - April 2025")
@@ -173,19 +191,27 @@ def select_board_revision():
         return "1.6"
 
 
-def select_mmwave_sensor(board_revision):
-    """Step 3: Select mmWave Sensor - depends on board revision"""
-    print_header("Step 3: Select mmWave Sensor")
+def select_mmwave_sensor(board_revision, platform=None):
+    """Step 3: Select mmWave Sensor - depends on board revision and platform"""
+
+    # For SmartThings, allow both sensors (SEN0395 only works with Rev 1.5)
+    if platform == "SmartThings":
+        print_header("Step 3: Select mmWave Sensor")
+        print_option(1, "DFRobot SEN0609", "5-pin mmWave sensor")
+        print_option(2, "DFRobot SEN0395", "6-pin mmWave sensor (Rev 1.5 only)")
+        choice = get_selection(2)
+        return "SEN0395" if choice == 2 else "SEN0609"
 
     # Board revision 1.3/1.4 only supports SEN0395
     if board_revision == "1.3/1.4":
-        print_option(
-            1, "DFRobot SEN0395", "6-pin mmWave sensor (required for Rev 1.3/1.4)"
+        print_header("Step 3: Select mmWave Sensor")
+        print(
+            f"  {Colors.BOLD}DFRobot SEN0395{Colors.END} (only option for Rev 1.3/1.4)"
         )
-        choice = get_selection(1)
         return "SEN0395"
 
     # Board revision 1.5 and 1.6 support both
+    print_header("Step 3: Select mmWave Sensor")
     print_option(1, "DFRobot SEN0609", "5-pin mmWave sensor (after March 2024)")
     print_option(2, "DFRobot SEN0395", "6-pin mmWave sensor (before March 2024)")
 
@@ -193,8 +219,17 @@ def select_mmwave_sensor(board_revision):
     return "SEN0395" if choice == 2 else "SEN0609"
 
 
-def select_co2_module():
-    """Step 4: Select CO2 Module"""
+def select_co2_module(platform):
+    """Step 4: Select CO2 Module - not available for SmartThings"""
+
+    # SmartThings doesn't support CO2
+    if platform == "SmartThings":
+        print_header("Step 4: Select CO2 Sensor")
+        print(
+            f"  {Colors.BOLD}No CO2 Sensor{Colors.END} (CO2 not supported on SmartThings)"
+        )
+        return None
+
     print_header("Step 4: Select CO2 Sensor")
     print_option(1, "No CO2 Sensor", "Base EP1 only")
     print_option(2, "CO2 Sensor", "Add CO2 add-on module")
@@ -222,8 +257,17 @@ def select_ble_option(platform):
     return "Bluetooth" if choice == 1 else "No-Bluetooth"
 
 
-def select_firmware_version():
-    """Step 6: Select Firmware Version"""
+def select_firmware_version(platform, sensor):
+    """Step 6: Select Firmware Version - Beta not available for SEN0609 or SmartThings"""
+
+    # Beta not available for SEN0609 or SmartThings
+    if sensor == "SEN0609" or platform == "SmartThings":
+        print_header("Step 6: Select Firmware Version")
+        print(
+            f"  {Colors.BOLD}Stable{Colors.END} (Beta not available for {sensor if sensor == 'SEN0609' else 'SmartThings'})"
+        )
+        return "Stable"
+
     print_header("Step 6: Select Firmware Version")
     print_option(1, "Stable", "Production-tested firmware")
     print_option(2, "Beta", "Latest features (may have bugs)")
@@ -267,10 +311,11 @@ def build_manifest_url(
 
     # Add board revision
     if platform == "SmartThings":
-        if sensor == "SEN0609":
-            base += "-rev1-6"
-        else:
+        # SmartThings uses the actual board revision selected
+        if board_revision == "1.5":
             base += "-rev1-5"
+        else:
+            base += "-rev1-6"
     else:
         if board_revision == "1.3/1.4":
             base += "-rev1-3"
@@ -829,13 +874,14 @@ def main():
     # Flash firmware flow (original code)
     # Interactive configuration - matches web flasher flow
     platform = select_platform()
-    board_revision = select_board_revision()
-    sensor = select_mmwave_sensor(board_revision)
-    addon_module = select_co2_module()
+    # Get sensor first since board revision depends on platform and sensor
+    sensor = select_mmwave_sensor(None, platform)
+    board_revision = select_board_revision(platform, sensor)
+    addon_module = select_co2_module(platform)
 
     if platform == "Home Assistant":
         firmware_type = select_ble_option(platform)
-        firmware_version = select_firmware_version()
+        firmware_version = select_firmware_version(platform, sensor)
     else:
         # SmartThings
         firmware_type = None
