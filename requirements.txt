@@ -1,0 +1,4 @@
+# Requirements for EP1 CLI Flasher
+requests
+pyserial
+esptool

@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+# Virtual environments
+.venv
+
+# IDEs
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ruff
+.ruff_cache/
