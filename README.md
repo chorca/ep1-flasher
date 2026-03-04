@@ -42,10 +42,10 @@ python ep1-flasher.py
 The tool will guide you through the following steps:
 
 1. **Select Platform**: Choose Home Assistant or SmartThings
-2. **Select mmWave Sensor**: Choose DFRobot SEN0395 or SEN0609
-3. **Select Add-on Module**: Choose None or CO2 Module
-4. **Select Board Revision**: Choose 1.3/1.4 or 1.5 (if CO2 module selected)
-5. **Select Firmware Type**: Choose Bluetooth Proxy or No Bluetooth (Home Assistant only)
+2. **Select Board Revision**: Choose 1.6, 1.5, or 1.3/1.4
+3. **Select mmWave Sensor**: Choose DFRobot SEN0609 or SEN0395 (depends on board revision)
+4. **Select CO2 Module**: Choose None or CO2 Module
+5. **Select Bluetooth Option**: Choose Bluetooth Proxy or No Bluetooth (Home Assistant only)
 6. **Select Firmware Version**: Choose Stable or Beta
 
 The tool will then:
